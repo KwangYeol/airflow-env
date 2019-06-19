@@ -1,0 +1,41 @@
+version: "2.1"
+services:
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    healthcheck:
+      test: "pg_isready -h localhost -p 5432 -q -U airflow"
+      interval: 3s
+      timeout: 1s
+      retries: 10
+
+  webserver:
+    image: puckel/docker-airflow:1.10.3
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      - LOAD_EX=n
+      - EXECUTOR=Local
+      # connections
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgres://airflow:airflow@postgres:5432/airflow
+      - FERNET_KEY=7szy64aEgSgGlMpiwHFjPTZ7uMpY2qEI3rRRpnlLCBI=
+    volumes:
+      # dags
+      - ./dags:/usr/local/airflow/dags
+      # custom plugins
+      - ./plugins:/usr/local/airflow/plugins
+      # certificates
+      - ./certs:/usr/local/airflow/certs
+    ports:
+      - "8080:8080"
+    command: "webserver"
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3

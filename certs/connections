@@ -1,0 +1,1 @@
+airflow connections -a --conn_id my_hive --conn_type hive_cli --conn_host something/something
